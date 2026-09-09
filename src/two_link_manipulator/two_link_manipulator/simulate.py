@@ -20,8 +20,10 @@ class SimulateNode(Node):
         self.model = mujoco.MjModel.from_xml_path(self.xml_path)
         self.data = mujoco.MjData(self.model)
         self.paused = False
-        self.show_marker = False;
+        self.show_marker = False
         mujoco.mj_forward(self.model, self.data)
+
+        self.srv = self.create_service()
 
         self.kp = 100
         self.kd = 500
