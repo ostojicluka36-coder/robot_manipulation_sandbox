@@ -9,9 +9,11 @@ import rclpy
 import mujoco
 import mujoco.viewer
 import time
+import threading
 import numpy as np
 from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
+from custom_interfaces.srv import Position2D
 
 class SimulateNode(Node):
     def __init__(self):
@@ -23,16 +25,23 @@ class SimulateNode(Node):
         self.show_marker = False
         mujoco.mj_forward(self.model, self.data)
 
-        self.srv = self.create_service()
+        self.srv = self.create_service(Position2D, 'set_goal', self.set_goal_callback)
 
         self.kp = 100
         self.kd = 500
+        self.x_goal = None
+        self.y_goal = None
 
     def key_callback(self, keycode):
             if chr(keycode) == ' ':
                 self.paused = not self.paused
             elif chr(keycode) == '6':
                 self.show_marker = not self.show_marker;
+
+    def set_goal_callback(self, request, response):
+        self.x_goal = request.x
+        self.y_goal = request.y
+        return response
     
     def run(self):
         with mujoco.viewer.launch_passive(self.model, self.data, key_callback=self.key_callback) as viewer:
@@ -54,12 +63,12 @@ class SimulateNode(Node):
 
                 viewer.user_scn.ngeom = 0
 
-                if self.show_marker:
+                if self.show_marker and self.x_goal is not None and self.y_goal is not None:
                     mujoco.mjv_initGeom(
                         viewer.user_scn.geoms[0],
                         type=mujoco.mjtGeom.mjGEOM_SPHERE,
                         size=[0.05, 0, 0],
-                        pos=np.array([1.0, 1.0, 0.0]),
+                        pos=np.array([self.x_goal, self.y_goal, 0.0]),
                         mat=np.eye(3).flatten(),
                         rgba=np.array([0.5, 0.5, 0, 1], dtype=np.float32)
                     )
@@ -83,11 +92,17 @@ def main():
     rclpy.init()
 
     node = SimulateNode()
-    node.run()
-    rclpy.spin(node)
 
-    node.destroy_node()
-    rclpy.shutdown()
+    spin_thread = threading.Thread(target=rclpy.spin, args=(node, ), daemon=True)
+    spin_thread.start()
+
+    try:
+        node.run()
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+        spin_thread.join(timeout=1.0)
+
 
 
 if __name__ == '__main__':
