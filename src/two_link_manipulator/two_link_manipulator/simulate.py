@@ -42,6 +42,15 @@ class SimulateNode(Node):
         self.x_goal = request.x
         self.y_goal = request.y
         return response
+
+    def inverse_kinematics(self, x, y):
+        q2_1 = np.arccos((x**2 + y**2)/2 - 1)
+        q1_1 = np.arctan2(y * (1 + np.cos(q2_1)) - x * np.sin(q2_1), x * (1 + np.cos(q2_1)) + y * np.sin(q2_1)) 
+
+        q2_2 = -np.arccos((x**2 + y**2)/2 - 1)
+        q1_2 = np.arctan2(y * (1 + np.cos(q2_2)) - x * np.sin(q2_2), x * (1 + np.cos(q2_2)) + y * np.sin(q2_2)) 
+
+        return [q1_1, q2_1, q1_2, q2_2]
     
     def run(self):
         with mujoco.viewer.launch_passive(self.model, self.data, key_callback=self.key_callback) as viewer:
@@ -57,7 +66,12 @@ class SimulateNode(Node):
             while viewer.is_running() and time.time() - start < 99999:
                 step_start = time.time()
     
-                self.data.ctrl = self.pd_control([np.pi/2, 0]) 
+                if self.x_goal is not None and self.y_goal is not None:
+                    q1, q2, _, _ = self.inverse_kinematics(self.x_goal, self.y_goal)
+                    self.data.ctrl = self.pd_control([q1, q2]) 
+                    print(q1, q2)
+                else:
+                    self.data.ctrl = 0
 
                 ### MARKER ###
 
