@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'simulation = two_link_manipulator.simulate:main',
+            'set_goal_node = two_link_manipulator.set_goal:main',
         ],
     },
 )

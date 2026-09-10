@@ -28,7 +28,7 @@ class SimulateNode(Node):
         self.srv = self.create_service(Position2D, 'set_goal', self.set_goal_callback)
 
         self.kp = 100
-        self.kd = 500
+        self.kd = 200
         self.x_goal = None
         self.y_goal = None
 
