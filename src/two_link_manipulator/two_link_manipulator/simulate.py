@@ -69,7 +69,6 @@ class SimulateNode(Node):
                 if self.x_goal is not None and self.y_goal is not None:
                     q1, q2, _, _ = self.inverse_kinematics(self.x_goal, self.y_goal)
                     self.data.ctrl = self.pd_control([q1, q2]) 
-                    print(q1, q2)
                 else:
                     self.data.ctrl = 0
 
