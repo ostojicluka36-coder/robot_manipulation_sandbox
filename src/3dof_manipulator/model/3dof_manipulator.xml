@@ -1,6 +1,7 @@
 <mujoco model='simple 3dof manipulator'>
 
-  <option gravity="0 0 -9.81"/>
+<!--  <option gravity="0 0 -9.81"/> -->
+  <option gravity="0 0 0"/>
   <compiler angle="radian"/>
 
   <worldbody>
@@ -9,6 +10,9 @@
       <inertial mass="50.0" pos="0.0 0.0 -0.5" diaginertia="0.07707 5.1763 5.1763"/>
       <joint name="first_joint" type="hinge" pos="0.0 0.0 -1.0" axis="0 0 1"/>
       <geom name="first_link_geom" type="cylinder" pos="0.0 0.0 -0.5" size="0.2 0.5" rgba="1.0 0.0 0.0 1.0"/>
+      <!-- visual marker -->
+      <geom name="first_link_marker" type="box" pos="0.25 0.0 -0.5" size="0.08 0.08 0.08" rgba="1.0 1.0 0.5 1.0"/>
+      <!-- -->
       <body name="second_link" pos="0.0 0.0 0.0" euler="-1.57079632679 0.0 0.0">
         <inertial mass="10.0" pos="0.5 0.0 0.0" diaginertia="0.07707 5.1763 5.1763"/>
         <joint name="second_joint" type="hinge" pos="0.0 0.0 0.0" axis="0 0 1"/>
