@@ -1,0 +1,56 @@
+<mujoco model="industrial robot">
+
+    <!-- PROMENI INERTIAL VREDNOSTI KADA BUDES RADIO NESTO SA DINAMIKOM NA OVOM ROBOTU-->
+
+    <!-- L1 = 4.0 L3 = 2.0 L4 = 3.0 d6 = 2.0 -->
+
+    <option gravity="0 0 0"/>
+    <compiler angle="radian"/>
+
+    <worldbody>
+      <light name="top" pos="0.0 0.0 20.0" mode="trackcom"/>
+      <body name="first_link" pos="0.0 0.0 4.0">
+        <inertial mass="50.0" pos="0.0 0.0 -2.0" diaginertia="0.07707 5.1763 5.1763"/>
+        <joint name="first_joint" type="hinge" pos="0.0 0.0 -4.0" axis="0 0 1"/>
+        <geom name="first_link_geom" type="cylinder" pos="0.0 0.0 -2.0" size="0.4 2.0" rgba="1.0 0.0 0.0 1.0"/>
+        <body name="second_link" pos="0.0 0.0 0.0" euler="-1.57079632679 0.0 0.0">
+          <inertial mass="50.0" pos="1.0 0.0 0.0" diaginertia="0.07707 5.1763 5.1763"/>
+          <joint name="second_joint" type="hinge" pos="0.0 0.0 0.0" axis="0 0 1"/>
+          <geom name="second_link_geom" type="cylinder" pos="1.0 0.0 0.0" euler="0.0 -1.57079632679 0.0" size="0.4 1.0" rgba="0.0 1.0 0.0 1.0"/>
+          <body name="third_link" pos="2.0 0.0 0.0" euler="0.0 0.0 -1.57079632679">
+            <inertial mass="50.0" pos="0.0 1.0 0.0" diaginertia="0.07707 5.1763 5.1763"/>
+            <joint name="third_joint" type="hinge" pos="0.0 0.0 0.0" axis="0 0 1"/>
+            <geom name="third_link_geom" type="cylinder" pos="0.0 1.0 0.0" euler="-1.57079632679 0.0 0.0" size="0.4 1.0" rgba="0.0 0.0 1.0 1.0"/>
+            <body name="fourth_link" pos="0.0 3.0 0.0" euler="-1.57079632679 0.0 -1.57079632679">
+              <inertial mass="25.0" pos="0.0 0.0 -0.5" diaginertia="0.07707 5.1763 5.1763"/>
+              <joint name="fourth_joint" type="hinge" pos="0.0 0.0 -1.0" axis="0 0 1"/>
+              <geom name="fourth_link_geom" type="cylinder" pos="0.0 0.0 -0.5" size="0.2 0.5" rgba="1.0 1.0 0.0 1.0"/>
+              <body name="fifth_link" pos="0.0 0.0 0.0" euler="-1.57079632679 0.0 0.0">
+                <inertial mass="25.0" pos="0.0 -0.5 0.0" diaginertia="0.07707 5.1763 5.1763"/>
+                <joint name="fifth_joint" type="hinge" pos="0.0 0.0 0.0" axis="0 0 1"/>
+                <geom name="fifth_link_geom" type="cylinder" pos="0.0 -0.5 0.0" euler="-1.57079632679 0.0 0.0" size="0.2 0.5" rgba="0.0 1.0 1.0 1.0"/>
+                <body name="sixth_link" pos="0.0 0.0 0.0" euler="1.57079632679 0.0 0.0">
+                  <inertial mass="25.0" pos="0.0 0.0 1.5" diaginertia="0.07707 5.1763 5.1763"/>
+                  <joint name="sixth_joint" type="hinge" pos="0.0 0.0 1.0" axis="0 0 1"/>
+                  <geom name="sixth_link_geom" type="cylinder" pos="0.0 0.0 1.5" euler="0.0 0.0 0.0" size="0.2 0.5" rgba="0.5 0.5 0.5 1.0"/>
+                  <body name="tool_frame" pos="0.0 0.0 2.0"/>
+                </body>
+              </body>
+            </body>
+          </body>
+        </body>
+      </body>
+
+    </worldbody>
+
+
+    <actuator>
+      <general name="first_actuator" ctrlrange="-500.0 500.0" joint="first_joint"/>
+      <general name="second_actuator" ctrlrange="-500.0 500.0" joint="second_joint"/>
+      <general name="third_actuator" ctrlrange="-500.0 500.0" joint="third_joint"/>
+      <general name="fourth_actuator" ctrlrange="-500.0 500.0" joint="fourth_joint"/>
+      <general name="fifth_actuator" ctrlrange="-500.0 500.0" joint="fifth_joint"/>
+      <general name="sixth_actuator" ctrlrange="-500.0 500.0" joint="sixth_joint"/>
+    </actuator>
+
+</mujoco>
