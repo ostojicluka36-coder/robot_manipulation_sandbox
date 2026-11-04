@@ -22,9 +22,6 @@ class SimulateNode(Node):
         self.paused = False
         self.show_marker = False
         self.show_solution = 1
-        self.x_goal = None
-        self.y_goal = None
-        self.z_goal = None
         self.L1 = 4.0
         self.L3 = 2.0
         self.L4 = 3.0
@@ -33,23 +30,54 @@ class SimulateNode(Node):
         mujoco.mj_forward(self.model, self.data)
 
 
+    def add_frame_marker(self, scn, T, length=1.0, radius=0.05):
+        R = T[:3, :3]
+        p = T[:3, 3]
+        colors = [(1, 0, 0, 1), (0, 1, 0, 1), (0, 0, 1, 1)]
+
+        for i in range(3):
+            if scn.ngeom >= scn.maxgeom:
+                return
+            axis = R[:, i]
+            mujoco.mjv_initGeom(
+                scn.geoms[scn.ngeom],
+                type=mujoco.mjtGeom.mjGEOM_ARROW,
+                size=np.zeros(3),
+                pos=np.zeros(3),
+                mat=np.eye(3).flatten(),
+                rgba=np.array(colors[i], dtype=np.float32),
+            )
+            mujoco.mjv_connector(
+                scn.geoms[scn.ngeom],
+                type=mujoco.mjtGeom.mjGEOM_ARROW,
+                width=radius,
+                from_=p,
+                to=p + length * axis,
+            )
+            scn.ngeom += 1
+
+
     def key_callback(self, keycode):
             if chr(keycode) == ' ':
                 self.paused = not self.paused
-            elif chr(keycode) == '6':
-                self.show_marker = not self.show_marker
-            elif chr(keycode) == '7':
-                self.show_solution = 1
-            elif chr(keycode) == '8':
-                self.show_solution = 2
-            elif chr(keycode) == '9':
-                self.show_solution = 3
             elif chr(keycode) == '-':
+                self.show_marker = not self.show_marker
+            elif chr(keycode) == '1':
+                self.show_solution = 1
+            elif chr(keycode) == '2':
+                self.show_solution = 2
+            elif chr(keycode) == '3':
+                self.show_solution = 3
+            elif chr(keycode) == '4':
                 self.show_solution = 4
 
     def inverse_kinematics(self, T_goal):
         R_goal = T_goal[:3, :3]
-        x, y, z = T_goal[:3, 3]
+        p_goal = T_goal[:3, 3]
+
+        p_zgl = p_goal - self.d6*R_goal[:, 2]
+
+        x, y, z = p_zgl
 
         ### SOLUTION 1 (q1 bez '+ pi', q3 plus)###
         q1_1 = np.atan2(y, x)
@@ -110,40 +138,29 @@ class SimulateNode(Node):
             viewer.cam.elevation = -45
             viewer.cam.azimuth = 135
 
+            T = np.array([[1.0, 0.0, 0.0, 2.5],
+                          [0.0, 1.0, 0.0, 3.5],
+                          [0.0, 0.0, 1.0, 4.0],
+                          [0.0, 0.0, 0.0, 1.0]])
+                          
+            sol1, sol2, sol3, sol4 = self.inverse_kinematics(T)
+
+            self.data.qpos[:3] = sol1
+            self.data.qpos[3:] = 0.0
+            self.data.qvel[:] = 0.0
+            mujoco.mj_forward(self.model, self.data)
 
             start = time.time()
 
-
             while viewer.is_running() and time.time() - start < 99999:
                 step_start = time.time()
-
-                T = np.array([[1, 0, 0, 2.5],
-                              [0, 1, 2, 3.5],
-                              [0, 0, 1, 3.0],
-                              [0, 0, 0, 1]])
-
-                sol1, sol2, sol3, sol4 = self.inverse_kinematics(T)
-                self.x_goal, self.y_goal, self.z_goal = T[:3, 3]
-
-                self.data.qpos[:3] = sol1
-                self.data.qpos[3:] = 0.0
-                self.data.qvel[:] = 0.0
-                mujoco.mj_forward(self.model, self.data)
     
                 ### MARKER ###
 
                 viewer.user_scn.ngeom = 0
 
-                if self.show_marker and self.x_goal is not None and self.y_goal is not None and self.z_goal is not None:
-                    mujoco.mjv_initGeom(
-                        viewer.user_scn.geoms[0],
-                        type=mujoco.mjtGeom.mjGEOM_SPHERE,
-                        size=[0.05, 0, 0],
-                        pos=np.array([self.x_goal, self.y_goal, self.z_goal]),
-                        mat=np.eye(3).flatten(),
-                        rgba=np.array([0.5, 0.5, 0, 1], dtype=np.float32)
-                    )
-                    viewer.user_scn.ngeom = 1
+                if self.show_marker and T is not None:
+                    self.add_frame_marker(viewer.user_scn, T)
 
                 if self.show_solution == 1:
                     self.data.qpos[:3] = sol1
