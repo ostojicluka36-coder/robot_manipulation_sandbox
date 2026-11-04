@@ -70,6 +70,19 @@ class SimulateNode(Node):
                 self.show_solution = 3
             elif chr(keycode) == '4':
                 self.show_solution = 4
+            elif chr(keycode) == '5':
+                self.show_solution = 5
+            elif chr(keycode) == '6':
+                self.show_solution = 6
+            elif chr(keycode) == '7':
+                self.show_solution = 7
+            elif chr(keycode) == '8':
+                self.show_solution = 8
+
+    def R_03(self, q1, q2, q3):
+        return np.array([[np.sin(q2 + q3)*np.cos(q1), np.cos(q2+ q3)*np.cos(q1), -np.sin(q1)],
+                         [np.sin(q2 + q3)*np.sin(q1), np.cos(q2 + q3)*np.sin(q1), np.cos(q1)],
+                         [np.cos(q2 + q3),           -np.sin(q2 + q3),            0]])
 
     def inverse_kinematics(self, T_goal):
         R_goal = T_goal[:3, :3]
@@ -88,7 +101,24 @@ class SimulateNode(Node):
 
         q2_1 = np.atan2(k1_1*(self.L1 - z) - k2_1*(x*np.cos(q1_1) + y*np.sin(q1_1)), k1_1*(x*np.cos(q1_1) + y*np.sin(q1_1)) + k2_1*(self.L1 - z))
 
-        sol1 = np.array([q1_1, q2_1, q3_1])
+        R_03 = self.R_03(q1_1, q2_1, q3_1)
+        R_36 = (R_03.T) @ R_goal
+
+        ###### SOLUTION 1.1 (q5 plus) ######
+        q5 = np.arccos(R_36[1, 2]) 
+        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
+        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
+        ######
+
+        sol1 = np.array([q1_1, q2_1, q3_1, q4, q5, q6])
+        
+        ###### SOLUTION 1.1 (q5 minus) ######
+        q5 = -np.arccos(R_36[1, 2]) 
+        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
+        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
+        ######
+
+        sol2 = np.array([q1_1, q2_1, q3_1, q4, q5, q6])
         ##################
 
         ### SOLUTION 2 (q1 sa '+ pi', q3 plus)###
@@ -100,7 +130,24 @@ class SimulateNode(Node):
 
         q2_2 = np.atan2(k1_2*(self.L1 - z) - k2_2*(x*np.cos(q1_2) + y*np.sin(q1_2)), k1_2*(x*np.cos(q1_2) + y*np.sin(q1_2)) + k2_2*(self.L1 - z))
 
-        sol2 = np.array([q1_2, q2_2, q3_2])
+        R_03 = self.R_03(q1_2, q2_2, q3_2)
+        R_36 = (R_03.T) @ R_goal
+
+        ###### SOLUTION 2.1 (q5 plus) ######
+        q5 = np.arccos(R_36[1, 2]) 
+        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
+        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
+        ######
+
+        sol3 = np.array([q1_2, q2_2, q3_2, q4, q5, q6])
+        
+        ###### SOLUTION 2.1 (q5 minus) ######
+        q5 = -np.arccos(R_36[1, 2]) 
+        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
+        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
+        ######
+
+        sol4 = np.array([q1_2, q2_2, q3_2, q4, q5, q6])
         ##################
 
         ### SOLUTION 3 (q1 bez '+ pi', q3 minus)###
@@ -111,7 +158,25 @@ class SimulateNode(Node):
         k2_3 = self.L4*np.sin(q3_3)
 
         q2_3 = np.atan2(k1_3*(self.L1 - z) - k2_3*(x*np.cos(q1_3) + y*np.sin(q1_3)), k1_3*(x*np.cos(q1_3) + y*np.sin(q1_3)) + k2_3*(self.L1 - z))
-        sol3 = np.array([q1_3, q2_3, q3_3])
+
+        R_03 = self.R_03(q1_3, q2_3, q3_3)
+        R_36 = (R_03.T) @ R_goal
+
+        ###### SOLUTION 3.1 (q5 plus) ######
+        q5 = np.arccos(R_36[1, 2]) 
+        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
+        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
+        ######
+
+        sol5 = np.array([q1_3, q2_3, q3_3, q4, q5, q6])
+        
+        ###### SOLUTION 3.1 (q5 minus) ######
+        q5 = -np.arccos(R_36[1, 2]) 
+        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
+        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
+        ######
+
+        sol6 = np.array([q1_3, q2_3, q3_3, q4, q5, q6])
         ##################
         
         ### SOLUTION 4 (q1 sa '+ pi', q3 minus)###
@@ -123,12 +188,29 @@ class SimulateNode(Node):
 
         q2_4 = np.atan2(k1_4*(self.L1 - z) - k2_4*(x*np.cos(q1_4) + y*np.sin(q1_4)), k1_4*(x*np.cos(q1_4) + y*np.sin(q1_4)) + k2_4*(self.L1 - z))
 
-        sol4 = np.array([q1_4, q2_4, q3_4])
+        R_03 = self.R_03(q1_4, q2_4, q3_4)
+        R_36 = (R_03.T) @ R_goal
+
+        ###### SOLUTION 4.1 (q5 plus) ######
+        q5 = np.arccos(R_36[1, 2]) 
+        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
+        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
+        ######
+
+        sol7 = np.array([q1_4, q2_4, q3_4, q4, q5, q6])
+        
+        ###### SOLUTION 4.1 (q5 minus) ######
+        q5 = -np.arccos(R_36[1, 2]) 
+        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
+        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
+        ######
+
+        sol8 = np.array([q1_4, q2_4, q3_4, q4, q5, q6])
         ##################
 
-        self.get_logger().info(f'{sol1}\n{sol2}\n{sol3}\n{sol4}')
+        self.get_logger().info(f'\nsol1 = {sol1}\nsol2 = {sol2}\nsol3 = {sol3}\nsol4 = {sol4}\nsol5 = {sol5}\nsol6 = {sol6}\nsol7 = {sol7}\nsol8 = {sol8}')
 
-        return sol1, sol2, sol3, sol4
+        return sol1, sol2, sol3, sol4, sol5, sol6, sol7, sol8
 
     
     def run(self):
@@ -138,15 +220,14 @@ class SimulateNode(Node):
             viewer.cam.elevation = -45
             viewer.cam.azimuth = 135
 
-            T = np.array([[1.0, 0.0, 0.0, 2.5],
-                          [0.0, 1.0, 0.0, 3.5],
-                          [0.0, 0.0, 1.0, 4.0],
+            T = np.array([[0.766, 0.0, 0.643, 2.5],
+                          [0.321, 0.866, -0.383, 3.5],
+                          [-0.557, 0.5, 0.663, 4.0],
                           [0.0, 0.0, 0.0, 1.0]])
                           
-            sol1, sol2, sol3, sol4 = self.inverse_kinematics(T)
+            sol1, sol2, sol3, sol4, sol5, sol6, sol7, sol8 = self.inverse_kinematics(T)
 
-            self.data.qpos[:3] = sol1
-            self.data.qpos[3:] = 0.0
+            self.data.qpos[:] = sol1
             self.data.qvel[:] = 0.0
             mujoco.mj_forward(self.model, self.data)
 
@@ -163,23 +244,35 @@ class SimulateNode(Node):
                     self.add_frame_marker(viewer.user_scn, T)
 
                 if self.show_solution == 1:
-                    self.data.qpos[:3] = sol1
-                    self.data.qpos[3:] = 0.0
+                    self.data.qpos[:] = sol1
                     self.data.qvel[:] = 0
                     mujoco.mj_forward(self.model, self.data)
                 elif self.show_solution == 2:
-                    self.data.qpos[:3] = sol2
-                    self.data.qpos[3:] = 0.0
+                    self.data.qpos[:] = sol2
                     self.data.qvel[:] = 0
                     mujoco.mj_forward(self.model, self.data)
                 elif self.show_solution == 3:
-                    self.data.qpos[:3] = sol3
-                    self.data.qpos[3:] = 0.0
+                    self.data.qpos[:] = sol3
                     self.data.qvel[:] = 0
                     mujoco.mj_forward(self.model, self.data)
                 elif self.show_solution == 4:
-                    self.data.qpos[:3] = sol4
-                    self.data.qpos[3:] = 0.0
+                    self.data.qpos[:] = sol4
+                    self.data.qvel[:] = 0
+                    mujoco.mj_forward(self.model, self.data)
+                elif self.show_solution == 5:
+                    self.data.qpos[:] = sol5
+                    self.data.qvel[:] = 0
+                    mujoco.mj_forward(self.model, self.data)
+                elif self.show_solution == 6:
+                    self.data.qpos[:] = sol6
+                    self.data.qvel[:] = 0
+                    mujoco.mj_forward(self.model, self.data)
+                elif self.show_solution == 7:
+                    self.data.qpos[:] = sol7
+                    self.data.qvel[:] = 0
+                    mujoco.mj_forward(self.model, self.data)
+                elif self.show_solution == 8:
+                    self.data.qpos[:] = sol8
                     self.data.qvel[:] = 0
                     mujoco.mj_forward(self.model, self.data)
 
