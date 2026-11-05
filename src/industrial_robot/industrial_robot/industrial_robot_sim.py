@@ -79,10 +79,6 @@ class SimulateNode(Node):
             elif chr(keycode) == '8':
                 self.show_solution = 8
 
-    def R_03(self, q1, q2, q3):
-        return np.array([[np.sin(q2 + q3)*np.cos(q1), np.cos(q2+ q3)*np.cos(q1), -np.sin(q1)],
-                         [np.sin(q2 + q3)*np.sin(q1), np.cos(q2 + q3)*np.sin(q1), np.cos(q1)],
-                         [np.cos(q2 + q3),           -np.sin(q2 + q3),            0]])
 
     def inverse_kinematics(self, T_goal):
         R_goal = T_goal[:3, :3]
@@ -92,127 +88,39 @@ class SimulateNode(Node):
 
         x, y, z = p_zgl
 
-        ### SOLUTION 1 (q1 bez '+ pi', q3 plus)###
-        q1_1 = np.atan2(y, x)
-        q3_1 = np.arccos(((z - self.L1)**2 + (x*np.cos(q1_1) + y*np.sin(q1_1))**2 - self.L4**2 - self.L3**2)/(2*self.L3*self.L4))
+        solutions = []
 
-        k1_1 = self.L3 + self.L4*np.cos(q3_1)
-        k2_1 = self.L4*np.sin(q3_1)
+        for q1_offset in (0.0, np.pi):
+            q1 = np.atan2(y, x) + q1_offset
+            for sign_q3 in (-1.0, 1.0):
+                a = (x*np.cos(q1) + y*np.sin(q1))
+                q3 = sign_q3*np.arccos(((z - self.L1)**2 + a**2 - self.L4**2 - self.L3**2)/(2*self.L3*self.L4))
+                k1 = self.L3 + self.L4*np.cos(q3)
+                k2 = self.L4*np.sin(q3)
+                q2 = np.atan2(k1*(self.L1 - z) - k2*a, k1*a + k2*(self.L1 - z))
 
-        q2_1 = np.atan2(k1_1*(self.L1 - z) - k2_1*(x*np.cos(q1_1) + y*np.sin(q1_1)), k1_1*(x*np.cos(q1_1) + y*np.sin(q1_1)) + k2_1*(self.L1 - z))
+                R_0_3 = np.array([[np.sin(q2 + q3)*np.cos(q1), np.cos(q2+ q3)*np.cos(q1), -np.sin(q1)],
+                                  [np.sin(q2 + q3)*np.sin(q1), np.cos(q2 + q3)*np.sin(q1), np.cos(q1)],
+                                  [np.cos(q2 + q3),           -np.sin(q2 + q3),            0         ]])
+                R_3_6 = (R_0_3.T) @ R_goal                
 
-        R_03 = self.R_03(q1_1, q2_1, q3_1)
-        R_36 = (R_03.T) @ R_goal
+                for sign_q5 in (-1.0, 1.0):
+                    q5 = sign_q5*np.arccos(R_3_6[1, 2])
+                    if abs(q5) < 1e-4:
+                        q6 = 0.0
+                        q4 = np.atan2(-R_3_6[2, 1], R_3_6[0, 1])
+                    elif abs(abs(q5) - np.pi) < 1e-4:
+                        q6 = 0.0
+                        q4 = np.atan2(R_3_6[2, 1], R_3_6[0, 1])
+                    else:
+                        q4 = np.atan2(R_3_6[0, 2]/np.sin(q5), R_3_6[2, 2]/np.sin(q5))
+                        q6 = np.atan2(R_3_6[1, 1]/np.sin(q5), -R_3_6[1, 0]/np.sin(q5))
 
-        ###### SOLUTION 1.1 (q5 plus) ######
-        q5 = np.arccos(R_36[1, 2]) 
-        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
-        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
-        ######
+                    solutions.append(np.array([q1, q2, q3, q4, q5, q6]))
 
-        sol1 = np.array([q1_1, q2_1, q3_1, q4, q5, q6])
-        
-        ###### SOLUTION 1.1 (q5 minus) ######
-        q5 = -np.arccos(R_36[1, 2]) 
-        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
-        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
-        ######
+        return solutions
 
-        sol2 = np.array([q1_1, q2_1, q3_1, q4, q5, q6])
-        ##################
 
-        ### SOLUTION 2 (q1 sa '+ pi', q3 plus)###
-        q1_2 = np.atan2(y, x) + np.pi
-        q3_2 = np.arccos(((z - self.L1)**2 + (x*np.cos(q1_2) + y*np.sin(q1_2))**2 - self.L4**2 - self.L3**2)/(2*self.L3*self.L4))
-
-        k1_2 = self.L3 + self.L4*np.cos(q3_2)
-        k2_2 = self.L4*np.sin(q3_2)
-
-        q2_2 = np.atan2(k1_2*(self.L1 - z) - k2_2*(x*np.cos(q1_2) + y*np.sin(q1_2)), k1_2*(x*np.cos(q1_2) + y*np.sin(q1_2)) + k2_2*(self.L1 - z))
-
-        R_03 = self.R_03(q1_2, q2_2, q3_2)
-        R_36 = (R_03.T) @ R_goal
-
-        ###### SOLUTION 2.1 (q5 plus) ######
-        q5 = np.arccos(R_36[1, 2]) 
-        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
-        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
-        ######
-
-        sol3 = np.array([q1_2, q2_2, q3_2, q4, q5, q6])
-        
-        ###### SOLUTION 2.1 (q5 minus) ######
-        q5 = -np.arccos(R_36[1, 2]) 
-        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
-        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
-        ######
-
-        sol4 = np.array([q1_2, q2_2, q3_2, q4, q5, q6])
-        ##################
-
-        ### SOLUTION 3 (q1 bez '+ pi', q3 minus)###
-        q1_3 = np.atan2(y, x)
-        q3_3 = -np.arccos(((z - self.L1)**2 + (x*np.cos(q1_3) + y*np.sin(q1_3))**2 - self.L4**2 - self.L3**2)/(2*self.L3*self.L4))
-
-        k1_3 = self.L3 + self.L4*np.cos(q3_3)
-        k2_3 = self.L4*np.sin(q3_3)
-
-        q2_3 = np.atan2(k1_3*(self.L1 - z) - k2_3*(x*np.cos(q1_3) + y*np.sin(q1_3)), k1_3*(x*np.cos(q1_3) + y*np.sin(q1_3)) + k2_3*(self.L1 - z))
-
-        R_03 = self.R_03(q1_3, q2_3, q3_3)
-        R_36 = (R_03.T) @ R_goal
-
-        ###### SOLUTION 3.1 (q5 plus) ######
-        q5 = np.arccos(R_36[1, 2]) 
-        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
-        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
-        ######
-
-        sol5 = np.array([q1_3, q2_3, q3_3, q4, q5, q6])
-        
-        ###### SOLUTION 3.1 (q5 minus) ######
-        q5 = -np.arccos(R_36[1, 2]) 
-        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
-        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
-        ######
-
-        sol6 = np.array([q1_3, q2_3, q3_3, q4, q5, q6])
-        ##################
-        
-        ### SOLUTION 4 (q1 sa '+ pi', q3 minus)###
-        q1_4 = np.atan2(y, x) + np.pi
-        q3_4 = -np.arccos(((z - self.L1)**2 + (x*np.cos(q1_4) + y*np.sin(q1_4))**2 - self.L4**2 - self.L3**2)/(2*self.L3*self.L4))
-
-        k1_4 = self.L3 + self.L4*np.cos(q3_4)
-        k2_4 = self.L4*np.sin(q3_4)
-
-        q2_4 = np.atan2(k1_4*(self.L1 - z) - k2_4*(x*np.cos(q1_4) + y*np.sin(q1_4)), k1_4*(x*np.cos(q1_4) + y*np.sin(q1_4)) + k2_4*(self.L1 - z))
-
-        R_03 = self.R_03(q1_4, q2_4, q3_4)
-        R_36 = (R_03.T) @ R_goal
-
-        ###### SOLUTION 4.1 (q5 plus) ######
-        q5 = np.arccos(R_36[1, 2]) 
-        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
-        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
-        ######
-
-        sol7 = np.array([q1_4, q2_4, q3_4, q4, q5, q6])
-        
-        ###### SOLUTION 4.1 (q5 minus) ######
-        q5 = -np.arccos(R_36[1, 2]) 
-        q4 = np.atan2(R_36[0, 2]/np.sin(q5), R_36[2, 2]/np.sin(q5))
-        q6 = np.atan2(R_36[1, 1]/np.sin(q5), -R_36[1, 0]/np.sin(q5))
-        ######
-
-        sol8 = np.array([q1_4, q2_4, q3_4, q4, q5, q6])
-        ##################
-
-        self.get_logger().info(f'\nsol1 = {sol1}\nsol2 = {sol2}\nsol3 = {sol3}\nsol4 = {sol4}\nsol5 = {sol5}\nsol6 = {sol6}\nsol7 = {sol7}\nsol8 = {sol8}')
-
-        return sol1, sol2, sol3, sol4, sol5, sol6, sol7, sol8
-
-    
     def run(self):
         with mujoco.viewer.launch_passive(self.model, self.data, key_callback=self.key_callback) as viewer:
             viewer.cam.lookat[:] = [0, 0, 0]
